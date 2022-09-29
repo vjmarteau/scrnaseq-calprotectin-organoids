@@ -1,0 +1,65 @@
+---
+title: "03-Visual_data_exploration"
+author: "Valentin Marteau"
+params:
+  data: "../../tables/pp_interactions"
+  lib:  "../lib"
+  results:  "../../results/produced_data/pp_interactions"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# load required packages
+library(conflicted)
+library(tidyverse)
+library(vsn)
+library(reshape2)
+
+conflict_prefer("rename", "dplyr")
+conflict_prefer("select", "dplyr")
+```
+
+```{r}
+dat <- reshape2::melt(raw, id.vars = c("ID", "Group", "Treatment", "Rep"),
+                      variable.name = "protein",
+                      value.name = "measurement")
+
+
+ggplot(dat, aes(x=log2(measurement))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+
+ggplot(dat,
+       aes(x = protein, y = measurement,
+           fill = protein)) +
+  geom_hline(yintercept = 0, linetype = "dashed", size = 0.5) +
+  stat_boxplot(geom = 'errorbar', position = position_dodge2(width = 0.75, preserve = "single", reverse = TRUE)) +
+  geom_boxplot(width = 0.75, outlier.color = NA, position = position_dodge2(width = 0.75, preserve = "single", reverse = TRUE) ) +
+  coord_flip()
+```
+```{r}
+ggplot(dat, aes(x=scale(log2(measurement)))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+```
+```{r}
+ggplot(dat, aes(x = scale(log2(measurement)), fill = Group)) +
+    geom_density(alpha=0.8)
+```
+```{r}
+ggplot(dat, aes(x = scale(log2(measurement)), fill = Group)) +
+    geom_density(alpha=0.8)
+```
+```{r}
+ggplot(dat, aes(x = scale(log2(measurement)), fill = Treatment)) +
+    geom_density(alpha=0.8)
+```
+```{r}
+ggplot(dat, aes(x = scale(log2(measurement)), fill = Treatment)) +
+    geom_density(alpha=0.8)
+```

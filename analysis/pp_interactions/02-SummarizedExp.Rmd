@@ -1,0 +1,60 @@
+---
+title: "02-SummarizedExperiment"
+author: "Valentin Marteau"
+params:
+  data: "../../tables/pp_interactions"
+  lib:  "../lib"
+  results:  "../../results/produced_data/pp_interactions"
+  prefix: "02-"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+library(tidyverse)
+library(SummarizedExperiment)
+library(HDF5Array)
+
+dfs <- lapply(list.files(path = params$results, pattern = "*.tsv", full.names = TRUE), read_tsv)
+
+files <- dir(params$results, pattern = "*.tsv")
+files <- sub("01-tidy_", "", files)
+files <- sub("\\.tsv", "", files)
+names(dfs) <- files
+```
+
+```{r}
+make_mtx <- function(df) {
+mat <- df |>
+  select(-c(2:4)) |>
+  pivot_longer(-1) |>
+  pivot_wider(names_from = 1, values_from = value) |>
+  column_to_rownames("name")
+mat <- as.matrix(mat)
+return(mat)
+}
+```
+
+```{r}
+se <- SummarizedExperiment(
+  assays = list(raw = make_mtx(dfs$raw),
+                raw_neg_Ctrl = make_mtx(dfs$raw_neg_Ctrl),
+                raw_imputed = make_mtx(dfs$raw_imputed)),
+  rowData = dfs$rowData,
+  colData = dfs$metadata)
+
+metadata(se)$Project_info <- "Proteome Discoverer 2.2 sampled MS data"
+metadata(se)$formula <- Abundance ~Treatment + Rep + Group
+
+saveHDF5SummarizedExperiment(x = se, dir = file.path(params$results), prefix = params$prefix)
+```
+
+```{r}
+se <- loadHDF5SummarizedExperiment(dir= file.path(params$results), prefix = params$prefix)
+```

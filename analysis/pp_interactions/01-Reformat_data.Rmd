@@ -1,0 +1,114 @@
+---
+title: "01-Reformat_data"
+author: "Valentin Marteau"
+params:
+  data: "../../tables/pp_interactions"
+  lib:  "../lib"
+  results:  "../../results/produced_data/pp_interactions"
+  prefix: "01-tidy"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# load required packages
+library(conflicted)
+library(readxl)
+library(tidyverse)
+
+conflict_prefer("rename", "dplyr")
+conflict_prefer("select", "dplyr")
+```
+```{r}
+# read data into memory
+raw_dat <- read_excel(file.path(params$data, "Almina_Consensus_der-IPs-aller-24-Patienten-zusatz-resampling (7).xlsx"))
+```
+
+# Tidy Protein annotation
+```{r}
+# FastaHeader Info (https://www.uniprot.org/help/fasta-headers)
+rowData <- raw_dat |>
+  select(1:15) |>
+  drop_na(1) |>
+  #filter_all(any_vars(!is.na(.))) |>
+  #slice(-c(1:3)) |>
+  janitor::row_to_names(1) |>
+  separate(Description, c("ProteinName", "OrganismName_OS", "OrganismIdentifier_OX", "ProteinExistence_PE", "SequenceVersion_SV"),
+           sep = "OS=|OX=|PE=|SV=") |>
+  separate(OrganismIdentifier_OX, c("OrganismIdentifier_OX", "GeneName_GN"), sep = "GN=") |> # Warning because some gene names missing!!
+  mutate_all(str_squish) |>
+  rename(UniProt_ID = Accession, ProteinSequenceLength_AAs= "# AAs", MolecularWeight_kDa = "MW [kDa]", IsoelectricPoint = "calc. pI",
+         SequenceCoverage = "Coverage [%]") |>
+  rename_with(~str_replace_all(., pattern = str_c(c("#", " ", "[:]"), collapse="|"), replacement = "")) |>
+  mutate_at(vars(-c("UniProt_ID", "ProteinName", "OrganismName_OS", "GeneName_GN", "ProteinFDRConfidenceCombined", "Modifications")), as.numeric) |>
+  mutate_at(vars(c("OrganismName_OS", "ProteinFDRConfidenceCombined")), as.factor) |>
+  arrange(UniProt_ID)
+
+#rowData[!rowData$...1 %in% a$...1,]
+#anti_join(rowData, a)
+
+# Nice REGEX to drop everything after second comma
+# sub('^([^,]+,[^,]+).*', '\\1', "Found in: M-Crohn, Beads mit A8-AK, 7, 800")
+
+# compare two dfs
+# all_equal(a,b)
+```
+
+# Tidy data - Generate metadata
+```{r}
+tidy_excel <- function(df, idx){
+  df |>
+  select(all_of(idx)) |>
+  drop_na(1) |>
+  janitor::row_to_names(1) |>
+  rename_with(~str_replace_all(., pattern = str_c(c("Abundances", "Abundance", "Found in", "by Bio. Rep.", "nur Beads", "Beads mit", "-AK", "[()]", "[:]"),
+                                                  collapse="|"), replacement = "")) |>
+  pivot_longer(-1) |>
+  pivot_wider(names_from = 1, values_from = value) |>
+  separate(name, c("Group", "Treatment", "Rep", "id"), sep = ",") |>
+  mutate_all(str_squish) |>
+  select(-c("id")) |>
+  mutate(Group = str_replace(Group, pattern = "Neugeborene", replacement = "Newborn")) |>
+  mutate(Group = str_replace(Group, pattern =str_c(c("Colitis Ulcerosa", "C-Ulcerosa"), collapse="|"), replacement = "C_Ulcerosa")) |>  
+  mutate(Group = str_replace(Group, pattern = "M-Crohn", replacement = "M_Crohn")) |>
+  mutate(Treatment = str_replace(Treatment, pattern = "Kontrolle", replacement = "Ctrl")) |>
+  unite("ID", c("Group", "Treatment", "Rep") , sep = "_", remove = FALSE) |>
+  mutate(Group = factor(Group, levels = c("Newborn", "C_Ulcerosa", "M_Crohn"))) |>
+  mutate(Treatment = factor(Treatment, levels = c("Ctrl", "A8", "A9"))) |>
+  mutate_at(vars("Rep"), as.numeric) |>
+  relocate(1:4, sort(tidyselect::peek_vars())) |>
+  arrange(Group, Treatment, Rep)
+}
+```
+
+# Save data as tsv
+```{r}
+raw <- tidy_excel(raw_dat, c(1, 70:141))
+raw_neg_Ctrl <- tidy_excel(raw_dat, c(1, 142:213))
+raw_imputed <- tidy_excel(raw_dat, c(1, 232:303))
+
+metadata <- raw_imputed[, 1:4]
+
+lapply(c("metadata", "rowData", "raw", "raw_neg_Ctrl", "raw_imputed"),
+       function(x) write_tsv(get(x), file.path(params$results, paste0(params$prefix, "_", x, ".tsv"))))
+```
+
+# For later reference: excel analysis
+```{r}
+# Resampled data 
+raw_dat[, c(1, 304:351)] # Resampled ratios per replicate
+
+raw_dat[, c(1, 352:399)] # Log abundance ratios per replicate
+
+raw_dat[, c(1, 400:411)] # Median Log abundance ratios
+
+raw_dat[, c(1, 412:424)] # Test stats
+
+raw_dat[, c(1, 424)] # Signif proteins
+```

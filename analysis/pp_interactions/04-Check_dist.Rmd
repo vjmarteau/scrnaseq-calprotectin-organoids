@@ -54,6 +54,8 @@ vsn <- imputed |>
   relocate("ID", "Group", "Bait", "Patient")
 
 # meanSdPlot(justvsn(t(vsn[, -c(1:4)])))
+
+write_tsv(vsn, file.path(params$results, paste0(params$prefix, "vsn.tsv")))
 ```
 
 ```{r}

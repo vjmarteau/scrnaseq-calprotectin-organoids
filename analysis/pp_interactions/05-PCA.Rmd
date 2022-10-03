@@ -1,0 +1,98 @@
+---
+title: "05-PCA"
+author: "Valentin Marteau"
+params:
+  data: "../../tables/P-P-interactions"
+  lib:  "../lib"
+  results:  "../../results/produced_data/p-p-interactions"
+  prefix: "05-"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# load required packages
+library(tidyverse)
+library(FactoMineR)
+library(ggrepel)
+```
+
+```{r}
+ratios <- read_tsv(file = file.path(params$results, "02-abundance_ratios.tsv"))
+imputed <- read_tsv(file = file.path(params$results, "01-tidy_raw_imputed.tsv"))
+vsn <- read_tsv(file = file.path(params$results, "04-vsn.tsv"))
+
+fct_level <- function(df){
+  df |>
+  mutate(Group = factor(Group, levels = c("Newborn", "C_Ulcerosa", "M_Crohn"))) |>
+  mutate(Bait = factor(Bait, levels = c("Ctrl", "A8", "A9"))) |>
+  mutate(Patient = factor(Patient)) |>
+  select_if(~sum(!is.na(.)) > 0)
+}
+
+ratios <- fct_level(ratios)
+imputed <- fct_level(imputed)
+vsn <- fct_level(vsn)
+```
+
+```{r}
+plt_pca <- function(df, labels, title){
+  mat <- as.matrix(df[, -c(1:4)])
+  mat <- log2(mat)
+  res.pca <- PCA(mat, scale.unit = TRUE, ncp = 4, graph = F)
+  coord_dat <- unlist(res.pca$ind$coord)
+  coord_dat <- coord_dat[, 1:2]
+  coord_dat <- data.frame(coord_dat, ID = df$ID, Group = df$Group, Bait = df$Bait, Patient = df$Patient)
+  coord_dat$label <- ifelse(coord_dat$ID %in% labels, coord_dat$ID, "")
+  percentVar <- round(unlist(res.pca$eig)[1:2, 2], digits = 1)
+  
+  p <- ggplot(coord_dat, aes(x = Dim.1, y = Dim.2)) +
+  geom_point(aes(fill = Group),
+             size = 8,
+             shape = 21) +
+  geom_label_repel(aes(label = label)) +  
+  scale_fill_manual(values = c("#A6D854", "#FC8D62", "#80B1D3")) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  ggtitle(paste0("PCA Proteome ", title))
+return(p)
+}
+
+plt_pca(vsn, labels = "", "vsn")
+plt_pca(imputed, labels = "", "imputed")
+plt_pca(ratios, labels = c("C_Ulcerosa_A9_7", "C_Ulcerosa_A9_3", "Newborn_A9_2", "Newborn_A8_7", "Newborn_A9_1"), "ratios")
+```
+
+```{r}
+plt_pca <- function(df, labels, title){
+  mat <- as.matrix(df[, -c(1:4)])
+  mat <- log2(mat)
+  res.pca <- PCA(mat, scale.unit = TRUE, ncp = 4, graph = F)
+  coord_dat <- unlist(res.pca$ind$coord)
+  coord_dat <- coord_dat[, 1:2]
+  coord_dat <- data.frame(coord_dat, ID = df$ID, Group = df$Group, Bait = df$Bait, Patient = df$Patient)
+  coord_dat$label <- ifelse(coord_dat$ID %in% labels, coord_dat$ID, "")
+  percentVar <- round(unlist(res.pca$eig)[1:2, 2], digits = 1)
+  
+  p <- ggplot(coord_dat, aes(x = Dim.1, y = Dim.2)) +
+  geom_point(aes(fill = Bait),
+             size = 8,
+             shape = 21) +
+  geom_label_repel(aes(label = label)) +  
+  scale_fill_manual(values = c("#A6D854", "#FC8D62", "#80B1D3")) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  ggtitle(paste0("PCA Proteome ", title))
+return(p)
+}
+
+plt_pca(vsn, labels = "", "vsn")
+plt_pca(imputed, labels = "", "imputed")
+plt_pca(ratios, labels = c("C_Ulcerosa_A9_7", "C_Ulcerosa_A9_3", "Newborn_A9_2", "Newborn_A8_7", "Newborn_A9_1"), "ratios")
+```

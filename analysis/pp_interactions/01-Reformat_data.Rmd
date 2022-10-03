@@ -71,19 +71,19 @@ tidy_excel <- function(df, idx){
                                                   collapse="|"), replacement = "")) |>
   pivot_longer(-1) |>
   pivot_wider(names_from = 1, values_from = value) |>
-  separate(name, c("Group", "Treatment", "Rep", "id"), sep = ",") |>
+  separate(name, c("Group", "Bait", "Patient", "id"), sep = ",") |>
   mutate_all(str_squish) |>
   select(-c("id")) |>
   mutate(Group = str_replace(Group, pattern = "Neugeborene", replacement = "Newborn")) |>
   mutate(Group = str_replace(Group, pattern =str_c(c("Colitis Ulcerosa", "C-Ulcerosa"), collapse="|"), replacement = "C_Ulcerosa")) |>  
   mutate(Group = str_replace(Group, pattern = "M-Crohn", replacement = "M_Crohn")) |>
-  mutate(Treatment = str_replace(Treatment, pattern = "Kontrolle", replacement = "Ctrl")) |>
-  unite("ID", c("Group", "Treatment", "Rep") , sep = "_", remove = FALSE) |>
+  mutate(Bait = str_replace(Bait, pattern = "Kontrolle", replacement = "Ctrl")) |>
+  unite("ID", c("Group", "Bait", "Patient") , sep = "_", remove = FALSE) |>
   mutate(Group = factor(Group, levels = c("Newborn", "C_Ulcerosa", "M_Crohn"))) |>
-  mutate(Treatment = factor(Treatment, levels = c("Ctrl", "A8", "A9"))) |>
-  mutate_at(vars("Rep"), as.numeric) |>
+  mutate(Bait = factor(Bait, levels = c("Ctrl", "A8", "A9"))) |>
+  mutate_at(vars("Patient"), as.numeric) |>
   relocate(1:4, sort(tidyselect::peek_vars())) |>
-  arrange(Group, Treatment, Rep)
+  arrange(Group, Bait, Patient)
 }
 ```
 

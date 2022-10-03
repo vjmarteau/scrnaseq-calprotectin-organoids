@@ -27,6 +27,11 @@ files <- dir(params$results, pattern = "*.tsv")
 files <- sub("01-tidy_", "", files)
 files <- sub("\\.tsv", "", files)
 names(dfs) <- files
+
+dfs$metadata <- dfs$metadata |>
+  mutate(Group = factor(Group, levels = c("Newborn", "C_Ulcerosa", "M_Crohn"))) |>
+  mutate(Bait = factor(Bait, levels = c("Ctrl", "A8", "A9"))) |>
+  mutate(Patient = factor(Patient))
 ```
 
 ```{r}
@@ -50,11 +55,53 @@ se <- SummarizedExperiment(
   colData = dfs$metadata)
 
 metadata(se)$Project_info <- "Proteome Discoverer 2.2 sampled MS data"
-metadata(se)$formula <- Abundance ~Treatment + Rep + Group
+metadata(se)$formula <- Abundance ~Bait + Patient + Group
 
-saveHDF5SummarizedExperiment(x = se, dir = file.path(params$results), prefix = params$prefix)
+saveHDF5SummarizedExperiment(x = se, dir = file.path(params$results), prefix = params$prefix, replace = TRUE)
+
+#se <- loadHDF5SummarizedExperiment(dir= file.path(params$results), prefix = params$prefix)
 ```
 
+# Compute ratios against neg Ctrls
 ```{r}
-se <- loadHDF5SummarizedExperiment(dir= file.path(params$results), prefix = params$prefix)
+ratios <- dfs$raw_imputed |>
+  group_by(Patient, Group) |>
+  mutate(across(where(is.numeric), ~ .x/.x[Bait == "Ctrl"])) |>
+  rowwise() |>
+  mutate(total = sum(c_across(where(is.numeric)), na.rm = T)) |>
+  relocate(total, .after = Bait) |>
+  filter(total != 902) |>
+  select(-total) |>
+  ungroup() |>
+  select_if(~sum(!is.na(.)) > 0)
+
+write_tsv(ratios, file.path(params$results, paste0(params$prefix, "abundance_ratios.tsv")))
+```
+
+# Usefull stuff when working with a SummarizedExperiment
+```{r}
+# Get one of the assays by position or name. assay(se) defaults to the first assay
+assay(se)
+assay(se, 3)
+assayNames(se)
+assays(se)$raw
+assays(se)$raw_imputed
+
+# Access the other slots of SummarizedExperiment
+colData(se)
+rowData(se)
+metadata(se)
+
+# Subset assay by metadata or RowData attributes
+se[, se$Group == "Newborn"]
+se[rowData(se)$OrganismName_OS == "Homo sapiens", ]
+subset(se, select = Group == "Newborn")
+
+# Get assay dimensions
+dim(se)
+
+# Get list of gene/protein/metabolite names
+dimnames(se)
+
+head(assay(se))
 ```

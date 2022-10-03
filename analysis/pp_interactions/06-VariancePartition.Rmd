@@ -1,0 +1,56 @@
+---
+title: "06-VariancePartition"
+author: "Valentin Marteau"
+params:
+  data: "../../tables/P-P-interactions"
+  lib:  "../lib"
+  results:  "../../results/produced_data/p-p-interactions"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# load required packages
+library(tidyverse)
+library(variancePartition)
+```
+```{r}
+# Read data into memory
+ratios <- read_tsv(file = file.path(params$results, "02-abundance_ratios.tsv"))
+imputed <- read_tsv(file = file.path(params$results, "01-tidy_raw_imputed.tsv"))
+vsn <- read_tsv(file = file.path(params$results, "04-vsn.tsv"))
+
+fct_level <- function(df){
+  df |>
+  mutate(Group = factor(Group, levels = c("Newborn", "C_Ulcerosa", "M_Crohn"))) |>
+  mutate(Bait = factor(Bait, levels = c("Ctrl", "A8", "A9"))) |>
+  mutate(Patient = factor(Patient)) |>
+  select_if(~sum(!is.na(.)) > 0)
+}
+
+ratios <- fct_level(ratios)
+imputed <- fct_level(imputed)
+vsn <- fct_level(vsn)
+```
+
+```{r}
+var_plt <- function(df){
+metadata <- df[, c(1:4)]
+dat <- log2(t(df[, -c(1:4)]))
+form <- ~ (Patient + Bait + Group)
+varPart <- fitExtractVarPartModel(dat, form, metadata)
+vp <- sortCols(varPart)
+p <- plotVarPart(vp)
+return(p)
+}
+
+var_plt(imputed)
+var_plt(ratios)
+var_plt(vsn)
+```

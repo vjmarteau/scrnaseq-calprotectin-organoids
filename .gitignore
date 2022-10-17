@@ -5,3 +5,10 @@ __pycache__
 
 analysis/*/*.nb.html
 *.Rproj
+
+.nextflow*
+envs/*.sif
+work/
+data/
+results/
+.DS_Store

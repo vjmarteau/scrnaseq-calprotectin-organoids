@@ -8,13 +8,15 @@ process Load_adata {
 
     input:
         path(samplesheet)
+        path(ch_input_files)
 
     output:
         path("metadata.csv"), emit: metadata
+        path("adata.h5ad"), emit: adata
 
 	script:
 	"""
-    Load_adata.py \\
+    01-Load_adata.py \\
     --samplesheet=${samplesheet}
 	"""
 }

@@ -8,7 +8,8 @@ workflow {
     // Retrieve and validate parameters
     assert params.samplesheet != null : "Please specify the `samplesheet` parameter"
     samplesheet = file(params.samplesheet, checkIfExists: true)
+    ch_input_files = Channel.fromPath(params.input_path)
 
     // start workflow
-    Load_adata(samplesheet)
+    Load_adata(samplesheet, ch_input_files)
 }

@@ -7,7 +7,6 @@ analysis/*/*.nb.html
 *.Rproj
 
 .nextflow*
-envs/*.sif
 work/
 data/
 results/

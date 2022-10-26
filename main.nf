@@ -3,6 +3,7 @@
 nextflow.enable.dsl=2
 
 include { Load_adata } from "./modules/Load_adata"
+include { H5AD_TO_SEURAT } from "./modules/H5AD_TO_SEURAT"
 
 workflow {
     // Retrieve and validate parameters
@@ -12,4 +13,5 @@ workflow {
 
     // start workflow
     Load_adata(samplesheet, ch_input_files)
+    H5AD_TO_SEURAT(Load_adata.out.adata)
 }

@@ -85,16 +85,5 @@ sc.pp.filter_cells(adata, min_genes=200)
 sc.pp.filter_genes(adata, min_cells=3)
 sc.pp.filter_cells(adata, min_counts=700)
 
-# Calculate QC metrics for all samples
-adata.var["mito"] = adata.var_names.str.startswith("MT-")
-
-# annotate the group of mitochondrial genes as 'mt'
-sc.pp.calculate_qc_metrics(
-    adata, qc_vars=["mito"], percent_top=None, log1p=False, inplace=True
-)
-
-# Rough filter threshold for mito < 30
-adata = adata[adata.obs.pct_counts_mito < 30, :]
-
 # Save adata
 adata.write(f"{resDir}/adata.h5ad", compression="gzip")

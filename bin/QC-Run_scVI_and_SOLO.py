@@ -44,7 +44,7 @@ set_all_seeds()
 
 adata = sc.read_h5ad(adata)
 
-sc.pp.highly_variable_genes(adata, batch_key='sample', flavor="seurat_v3", n_top_genes=10000)
+sc.pp.highly_variable_genes(adata, batch_key='sample', flavor="seurat_v3", n_top_genes=4000)
 
 adata_raw = adata.copy()
 sc.pp.normalize_total(adata_raw)
@@ -96,6 +96,8 @@ adata_nodoublet.obsm["X_scVI"] = model.get_latent_representation(adata_scvi[adat
 sc.pp.neighbors(adata_nodoublet, use_rep="X_scVI")
 
 sc.tl.umap(adata_nodoublet)
+
+sc.tl.leiden(adata_nodoublet, key_added="leiden", resolution=1)
 
 # Save adata nodoublet
 adata_nodoublet.write(f"{resDir}/adata_nodoublet.h5ad", compression="gzip")

@@ -2,10 +2,10 @@
 
 """
 Usage:
-  Load_raw.py --meta=<meta> [options]
+  Load_raw.py --samplesheet=<samplesheet> [options]
 
 Mandatory arguments:
-  --meta=<meta>       metadata from nfcore/rnaseq pipeline
+  --samplesheet=<samplesheet>       Samplesheet from nfcore/scrnaseq pipeline
 
 Optional arguments:
   --resDir=<resDir>   Output directory [default: ./]
@@ -16,12 +16,33 @@ import anndata as ad
 import scanpy as sc
 import numpy as np
 import pandas as pd
+import scipy.io
 
 args = docopt(__doc__)
-meta = args["--meta"]
+samplesheet = args["--samplesheet"]
 resDir = args["--resDir"]
 
-meta = pd.read_csv(meta, index_col=0)
+# Get metadata from samplesheet
+meta = pd.read_csv(samplesheet)
+meta.drop(axis="columns", labels=["fastq_1", "fastq_2"], inplace=True)
+#meta = pd.read_csv(meta, index_col=0)
+
+# Reorder by Sample ID, drop double columns, and update index
+sample_idx = []
+for s in meta["sample"].values:
+    sample_idx.append(int(s[2:]))
+
+meta["sample_idx"] = sample_idx
+meta = meta.sort_values("sample_idx")
+meta.index = meta.sample_idx
+meta = meta.drop(columns=["sample_idx"])
+
+meta["sample_idx"] = meta["sample"]
+meta = meta.set_index("sample_idx")
+meta.index.name = None
+
+# Drop patient P163
+meta = meta[meta["patient"] != "P163"]
 
 # load cellranger .h5 feature matrices
 adatas_d = dict()
@@ -48,6 +69,8 @@ raw = ad.concat(adatas_d, index_unique="_")
 
 # Use conversion key to re-assign symbols to ensembl ids
 raw.var.loc[cnvan_key.index, "gene_ids"] = cnvan_key.gene_ids
+
+raw.X = scipy.sparse.csr_matrix(raw.X)
 
 raw.obs["group"] = pd.Categorical(
     raw.obs["group"], categories=["Ctrl", "A8", "A9", "A8A9"]

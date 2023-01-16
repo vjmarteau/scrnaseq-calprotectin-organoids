@@ -5,7 +5,7 @@ Usage:
   Load_adata.py --samplesheet=<samplesheet> [options]
 
 Mandatory arguments:
-  --samplesheet=<samplesheet>       Samplesheet from nfcore/rnaseq pipeline
+  --samplesheet=<samplesheet>       Samplesheet from nfcore/scrnaseq pipeline
 
 Optional arguments:
   --resDir=<resDir>                 Output directory [default: ./]
@@ -16,6 +16,7 @@ import anndata as ad
 import scanpy as sc
 import numpy as np
 import pandas as pd
+import scipy.io
 
 args = docopt(__doc__)
 samplesheet = args["--samplesheet"]
@@ -71,6 +72,8 @@ adata = ad.concat(adatas_d, index_unique="_")
 # Use conversion key to re-assign symbols to ensembl ids
 adata.var.loc[cnvan_key.index, "gene_ids"] = cnvan_key.gene_ids
 
+adata.X = scipy.sparse.csr_matrix(adata.X)
+
 adata.obs["group"] = pd.Categorical(
     adata.obs["group"], categories=["Ctrl", "A8", "A9", "A8A9"]
 )
@@ -81,9 +84,13 @@ adata.obs["patient"] = pd.Categorical(adata.obs["patient"])
 adata.obs["batch"] = pd.Categorical(adata.obs["batch"])
 
 # Basic filter thresholds
+sc.pp.filter_cells(adata, min_counts=200)
 sc.pp.filter_cells(adata, min_genes=200)
+
+# -> As far as I can see scar authors don't filter dying cells (MT thresholds) or doublets (max_counts=100000) before running denoising.
+#sc.pp.filter_cells(adata, max_counts=100000)
 sc.pp.filter_genes(adata, min_cells=3)
-sc.pp.filter_cells(adata, min_counts=700)
+
 
 # Save adata
 adata.write(f"{resDir}/adata.h5ad", compression="gzip")

@@ -1,0 +1,22 @@
+Bootstrap: docker
+From: mambaorg/micromamba
+    
+%environment
+    export LANG=C.UTF-8 LC_ALL=C.UTF-8
+    export PATH=/opt/conda/bin:$PATH
+    export NUMBA_CACHE_DIR=/tmp/numba_cache
+
+%files
+    2022-calpro-scanpy.yaml /2022-calpro-scanpy.yaml
+    ../lib/scanpy_helper /scanpy_helpers
+
+%post
+    apt-get update
+    micromamba install --yes --name base --file /2022-calpro-scanpy.yaml
+    rm -f /2022-calpro-scanpy.yaml
+    apt-get clean
+    micromamba clean --all --yes
+
+%labels
+    Author vjmarteau
+    Version v0.1

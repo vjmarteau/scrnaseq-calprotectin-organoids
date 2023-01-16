@@ -7,6 +7,7 @@ analysis/*/*.nb.html
 analysis/*/*.ipynb
 *.Rproj
 
+*.sif
 .nextflow*
 work/
 data/

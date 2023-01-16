@@ -1,0 +1,35 @@
+# Conda environment for python scRNAseq data analysis
+name: 2022-calpro-deseq
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.2
+  - r-docopt
+  - r-conflicted
+  - r-rmarkdown
+  - r-yaml
+  - pandoc
+  - bioconductor-biocparallel
+  #- r-tidyverse
+  - r-matrix
+  - r-readr
+  - r-dplyr
+  - r-tibble
+  - r-forcats
+  - r-ggplot2
+  - bioconductor-deseq2
+  - bioconductor-apeglm
+  - bioconductor-ihw
+  - bioconductor-enhancedvolcano
+  - bioconductor-variancepartition
+  - bioconductor-complexheatmap
+  - r-seurat
+  - bioconductor-singlecellexperiment
+  - bioconductor-scran
+  - r-sctransform
+  - bioconductor-glmgampoi
+  - r-cowplot
+  - r-rcolorbrewer
+  - r-pheatmap

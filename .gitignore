@@ -4,6 +4,7 @@
 __pycache__
 
 analysis/*/*.nb.html
+analysis/*/*.ipynb
 *.Rproj
 
 .nextflow*

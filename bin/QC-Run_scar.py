@@ -2,11 +2,12 @@
 
 """
 Usage:
-  Run_scar.py --raw_adata=<raw_adata> --adata=<adata> [options]
+  Run_scar.py --raw_adata=<raw_adata> --adata=<adata> --cell_cycle_genes=<cell_cycle_genes> [options]
 
 Mandatory arguments:
   --raw_adata=<raw_adata>   raw_adata
   --adata=<adata>           adata
+  --cell_cycle_genes=<cell_cycle_genes>
 
 Optional arguments:
   --resDir=<resDir>     Output directory [default: ./]
@@ -40,6 +41,7 @@ def set_all_seeds(seed=0):
 args = docopt(__doc__)
 raw_adata = args["--raw_adata"]
 adata = args["--adata"]
+cell_cycle_genes = args["--cell_cycle_genes"]
 resDir = args["--resDir"]
 
 threadpool_limits(16)
@@ -94,6 +96,28 @@ adata.var['ribo'] = adata.var_names.str.startswith(('RPS', 'RPL'))
 
 sc.pp.calculate_qc_metrics(adata, qc_vars=['mito', 'ribo'], percent_top=None, log1p=False, inplace=True)
 
-adata = adata[adata.obs["pct_counts_mito"] < 30].copy()
+adata = adata[adata.obs["pct_counts_mito"] < 25].copy()
+
+
+# Annotate cell cycle phase
+cell_cycle_genes = [
+    x.strip() for x in open(cell_cycle_genes)
+]
+
+# Split into 2 lists
+s_genes = cell_cycle_genes[:43]
+g2m_genes = cell_cycle_genes[43:]
+cell_cycle_genes = [x for x in cell_cycle_genes if x in adata.var_names]
+
+adata_cycle = adata.copy()
+sc.pp.normalize_total(adata_cycle)
+sc.pp.log1p(adata_cycle)
+sc.pp.scale(adata_cycle)
+
+sc.tl.score_genes_cell_cycle(adata_cycle, s_genes=s_genes, g2m_genes=g2m_genes)
+
+adata.obs['S_score'] = adata_cycle.obs['S_score']
+adata.obs['G2M_score'] = adata_cycle.obs['G2M_score']
+adata.obs['phase'] = adata_cycle.obs['phase']
 
 adata.write(f"{resDir}/denoised_adata.h5ad", compression="gzip")

@@ -45,6 +45,7 @@ process RUN_SCAR {
     input:
         path(raw_adata)
         path(adata)
+        path(cell_cycle_genes)
 
     output:
         path("denoised_adata.h5ad"), emit: denoised_adata
@@ -53,7 +54,8 @@ process RUN_SCAR {
 	"""
     QC-Run_scar.py \\
     --raw_adata=${raw_adata} \\
-    --adata=${adata}    
+    --adata=${adata} \\
+    --cell_cycle_genes=${cell_cycle_genes}
 	"""
 }
 
@@ -67,6 +69,7 @@ process RUN_SCVI_AND_SOLO {
     output:
         path("scVI_model"), emit: scVI_model
         path("adata_nodoublet.h5ad"), emit: adata_nodoublet
+        path("is_doublet.png")
 
 	script:
 	"""
@@ -79,11 +82,12 @@ workflow PRE_PROCESS {
     take:
         samplesheet
         ch_input_files
+        cell_cycle_genes
 
     main:
         LOAD_ADATA(samplesheet, ch_input_files)
         LOAD_RAW(samplesheet, ch_input_files)
-        RUN_SCAR(LOAD_RAW.out.raw_adata, LOAD_ADATA.out.adata)
+        RUN_SCAR(LOAD_RAW.out.raw_adata, LOAD_ADATA.out.adata, cell_cycle_genes)
         RUN_SCVI_AND_SOLO(RUN_SCAR.out.denoised_adata)
 
     emit:

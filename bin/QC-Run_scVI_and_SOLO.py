@@ -15,6 +15,10 @@ from docopt import docopt
 import scvi
 import scanpy as sc
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+sc.settings.set_figure_params(figsize=(5,5))
+sns.set(font_scale=2)
 
 from threadpoolctl import threadpool_limits
 import multiprocessing
@@ -46,12 +50,20 @@ adata = sc.read_h5ad(adata)
 
 sc.pp.highly_variable_genes(adata, batch_key='sample', flavor="seurat_v3", n_top_genes=4000)
 
+## Standard scanpy preprocessing (for comparison)
 adata_raw = adata.copy()
 sc.pp.normalize_total(adata_raw)
 sc.pp.log1p(adata_raw)
 sc.tl.pca(adata_raw, use_highly_variable=True)
 adata.raw = adata_raw
 
+adata.obsm["X_pca"] = adata_raw.obsm["X_pca"]
+sc.pp.neighbors(adata, key_added="neighbors_uncorrected")
+sc.tl.umap(adata, neighbors_key="neighbors_uncorrected")
+adata.obsm["X_umap_uncorrected"] = adata.obsm["X_umap"]
+del adata.obsm["X_umap"]
+
+# scVI preprocessing
 adata_scvi = adata
 
 adata_scvi = adata[:, adata.var["highly_variable"]].copy()
@@ -60,7 +72,7 @@ scvi.model.SCVI.setup_anndata(adata_scvi, batch_key="sample")
 
 model = scvi.model.SCVI(adata_scvi)
 
-model.train(early_stopping=True)
+model.train(early_stopping=True, use_gpu=True)
 
 adata.obsm["X_scVI"] = model.get_latent_representation()
 
@@ -86,6 +98,10 @@ adata.obs["is_doublet"] = pd.concat(solo_res)
 solo_series = pd.concat(solo_res)
 solo_series.index = solo_series.index.str.replace("-0$", "", regex=True)
 adata.obs["is_doublet"] = solo_series
+
+fig, ax = plt.subplots(1,1,figsize=(5,5))
+sc.pl.umap(adata, color="is_doublet", ax=ax)
+fig.savefig(f"{resDir}/is_doublet.png", bbox_inches="tight")
 
 sc.pl.umap(adata, color="is_doublet")
 

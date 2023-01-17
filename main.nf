@@ -9,7 +9,8 @@ workflow {
     assert params.samplesheet != null : "Please specify the `samplesheet` parameter"
     samplesheet = file(params.samplesheet, checkIfExists: true)
     ch_input_files = Channel.fromPath(params.input_path)
+    cell_cycle_genes = file(params.cell_cycle_genes, checkIfExists: true)
 
     // start workflow
-    PRE_PROCESS(samplesheet, ch_input_files)
+    PRE_PROCESS(samplesheet, ch_input_files, cell_cycle_genes)
     }

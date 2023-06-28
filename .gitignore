@@ -8,6 +8,8 @@ data
 .nextflow*
 .vscode
 *.sif
+*.xlsx
+*gencode.v43_gene_annotation_table.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

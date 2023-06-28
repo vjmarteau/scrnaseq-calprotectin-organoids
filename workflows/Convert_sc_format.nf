@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-out_dir = file(params.resDir)
+out_dir = file(params.outdir)
 mode = params.publish_dir_mode
 
 process EXTRACT_ADATA {

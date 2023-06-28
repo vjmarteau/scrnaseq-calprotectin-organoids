@@ -1,15 +1,15 @@
 .ipynb_checkpoints
-*.pyc
-*.pyc
-__pycache__
-
 analysis/*/*.nb.html
 analysis/*/*.ipynb
 *.Rproj
-
-*.sif
+work
+containers
+data
 .nextflow*
-work/
-data/
-results/
-.DS_Store
+.vscode
+*.sif
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl=2
 
-include { PRE_PROCESS } from "./modules/Pre-process"
+include { PRE_PROCESS } from "./workflows/Pre-process"
 
 workflow {
     // Retrieve and validate parameters

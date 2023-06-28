@@ -1,0 +1,6 @@
+# Workflow flags
+outdir: ${baseDir}/data/results
+samplesheet: ${baseDir}/tables/samplesheet_scrnaseq.csv
+ch_input_files: ${baseDir}/data/10_nfcore_scrnaseq
+hgnc: ${baseDir}/tables/hgnc_complete_set_2023-03-02.txt
+cell_cycle_genes: ${baseDir}/tables/regev_lab_cell_cycle_genes_human.txt

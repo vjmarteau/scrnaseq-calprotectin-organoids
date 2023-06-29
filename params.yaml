@@ -3,5 +3,5 @@ outdir: ${baseDir}/data/results
 samplesheet: ${baseDir}/tables/samplesheet_scrnaseq.csv
 cellranger: ${baseDir}/data/30_nfcore_scrnaseq
 gencode_gtf: ${baseDir}/tables/gencode.v43_gene_annotation_table.csv
-hgnc: ${baseDir}/tables/hgnc_complete_set_2023-03-02.txt
+hgnc: ${baseDir}/tables/hgnc_complete_set_2023-06-29.txt
 cell_cycle_genes: ${baseDir}/tables/regev_lab_cell_cycle_genes_human.txt

@@ -11,9 +11,10 @@ workflow {
     samplesheet = file(params.samplesheet, checkIfExists: true)
     ch_input_files = Channel.fromPath(params.cellranger)
     gtf_file = file(params.gencode_gtf, checkIfExists: true)
+    hgnc_file = file(params.hgnc, checkIfExists: true)
     //cell_cycle_genes = file(params.cell_cycle_genes, checkIfExists: true)
     
     // start workflow
-    Remove_ambient_RNA_scAR(samplesheet, ch_input_files, gtf_file)
+    Remove_ambient_RNA_scAR(samplesheet, ch_input_files, gtf_file, hgnc_file)
     // PRE_PROCESS(samplesheet, ch_input_files, cell_cycle_genes)
     }

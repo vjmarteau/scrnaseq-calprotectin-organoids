@@ -54,6 +54,7 @@ process CONCAT_ADATAS {
         path(metadata)
         path(var_names)
         path(gtf_file)
+        path(hgnc_file)
 
     output:
         path("adata.h5ad"), emit: adata
@@ -65,6 +66,7 @@ process CONCAT_ADATAS {
     --metadata=${metadata} \\
     --var_names=${var_names} \\
     --gtf_file=${gtf_file} \\
+    --hgnc_file=${hgnc_file} \\
     --cpus=${task.cpus}
 	"""
 }
@@ -74,6 +76,7 @@ workflow Remove_ambient_RNA_scAR {
         samplesheet
         ch_input_files
         gtf_file
+        hgnc_file
 
     main:
         LOAD_ADATA(samplesheet, ch_input_files)
@@ -92,7 +95,7 @@ workflow Remove_ambient_RNA_scAR {
 
         ch_concat_adatas = RUN_SCAR.out.denoised_adata.map{ id, path -> path }.collect()
 
-        CONCAT_ADATAS(ch_concat_adatas, LOAD_ADATA.out.sample_meta, LOAD_ADATA.out.var_names, gtf_file)
+        CONCAT_ADATAS(ch_concat_adatas, LOAD_ADATA.out.sample_meta, LOAD_ADATA.out.var_names, gtf_file, hgnc_file)
         
     emit:
         adata = CONCAT_ADATAS.out.adata

@@ -9,7 +9,8 @@ data
 .vscode
 *.sif
 *.xlsx
-*gencode.v43_gene_annotation_table.csv
+gencode.v43_gene_annotation_table.csv
+hgnc_complete_set_2023-06-29.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

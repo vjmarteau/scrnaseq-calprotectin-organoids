@@ -9,10 +9,10 @@ process LOAD_ADATA {
 
     input:
         path(samplesheet)
-        path(ch_input_files)
+        path(cellranger_path)
 
     output:
-        path("metadata.csv"), emit: sample_meta
+        path("samplesheet.csv"), emit: samplesheet
         path("*_filtered_adata.h5ad"), emit: filtered_adata
         path("*_raw_adata.h5ad"), emit: raw_adata
         path("var_names.csv"), emit: var_names
@@ -20,6 +20,7 @@ process LOAD_ADATA {
 	script:
 	"""
     scAR_load_adata.py \\
+    --cellranger_path=${cellranger_path} \\
     --samplesheet=${samplesheet} \\
     --cpus=${task.cpus}
 	"""
@@ -51,19 +52,19 @@ process CONCAT_ADATAS {
 
     input:
         path(adatas_path)
-        path(metadata)
+        path(samplesheet)
         path(var_names)
         path(gtf_file)
         path(hgnc_file)
 
     output:
-        path("adata.h5ad"), emit: adata
+        path("denoised_adata.h5ad"), emit: denoised_adata
 
 	script:
 	"""
     scAR_concat_adatas.py \\
     --adatas_path=. \\
-    --metadata=${metadata} \\
+    --samplesheet=${samplesheet} \\
     --var_names=${var_names} \\
     --gtf_file=${gtf_file} \\
     --hgnc_file=${hgnc_file} \\
@@ -95,9 +96,9 @@ workflow Remove_ambient_RNA_scAR {
 
         ch_concat_adatas = RUN_SCAR.out.denoised_adata.map{ id, path -> path }.collect()
 
-        CONCAT_ADATAS(ch_concat_adatas, LOAD_ADATA.out.sample_meta, LOAD_ADATA.out.var_names, gtf_file, hgnc_file)
+        CONCAT_ADATAS(ch_concat_adatas, LOAD_ADATA.out.samplesheet, LOAD_ADATA.out.var_names, gtf_file, hgnc_file)
         
     emit:
-        adata = CONCAT_ADATAS.out.adata
+        denoised_adata = CONCAT_ADATAS.out.denoised_adata
 
 }
